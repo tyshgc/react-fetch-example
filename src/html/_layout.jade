@@ -1,0 +1,23 @@
+- var page= {}
+- page.siteName = ''
+- page.titleSeparation = ''
+
+doctype html
+html.client
+  head
+    meta(charset="utf-8")
+    meta(name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1, minimal-ui")
+    
+    block styles
+      link(type="text/css", rel="stylesheet", media="all", href="/styles/view.css")
+    
+    title
+      block html_title
+        | #{page.siteName}
+  
+  block root
+    body(role="document")
+      block body
+          block content
+
+          script(type="text/javascript", src="/scripts/app.js")

@@ -1,0 +1,117 @@
+// Core functions
+// ======================================
+
+// Get the list of the items to reset from a string
+get_reset_items($string)
+  return split(',', replace(',? +', ',', $string))
+
+
+// Function to register the given reset $declaration with the given $name
+$registered_resets = {}
+register_reset($name, $declaration)
+  // No optimization here. Yet.
+  unless $name in $registered_resets
+    $registered_resets[$name] = $declaration
+
+
+// Function to use the reset with the registered $name for the given elements
+// (all elements if the second argument is omitted)
+$used_resets = {}
+use_reset($name, $elements = 'all')
+  if selector() != '&'
+    error('`use_reset` can be used only at the top level, not inside the selector scope!')
+
+  if $name in $registered_resets
+    // if $name in $used_resets
+    //   $used_resets[$name] = merge($used_resets[$name], get_reset_items($elements))
+    unless $name in $used_resets
+      $used_resets[$name] = get_reset_items($elements)
+
+      // Placing the placeholders for the groups
+      for $group_name, $group in $registered_resets[$name]
+        $reset_{ $name + '_' + $group_name }
+          $content = $group.rules
+          {$content}
+
+
+$resets_list = {}
+$resets_aliases = {}
+
+use_reset2($name)
+  // , $elements = 'all' — premature feature creep
+  if selector() != '&'
+    error('`use_reset` can be used only at the top level, not inside the selector scope!')
+
+  _use($key, $value)
+
+    return lol
+
+  if $name in $registered_resets
+    for $key, $value in $registered_resets[$name]
+      _use($key, $value)
+
+
+// The main function for calling the reset
+reset($elements = 'all')
+  $elements = get_reset_items($elements)
+
+  $should_reset = false
+  $what_to_reset = ()
+
+  for $element in $elements
+    for $reset, $reset_elements in $used_resets
+      if ('all' in $reset_elements) or ($element in $reset_elements)
+        $should_reset = true
+
+    if $element == 'all' and selector() == '&'
+      for $reset_family, $reset_family_content in $registered_resets
+        if $reset_family in $used_resets
+          for $reset_group, $reset_content in $reset_family_content
+            $selector = $reset_content.elements ? join(', ', $reset_content.elements) : $reset_group
+            $what = {}
+            $what[$selector] = '$reset_' + $reset_family + '_' + $reset_group
+            push($what_to_reset, $what)
+      $should_reset = false
+
+    if $should_reset
+      for $reset_family, $reset_family_content in $registered_resets
+        for $reset_group, $reset_content in $reset_family_content
+          $should_reset = false
+          if $reset_content.elements
+            if $element in $reset_content.elements
+              $should_reset = true
+          else
+            if $element == $reset_group
+              $should_reset = true
+
+          if $reset_group == $element and $reset_content.elements
+            $what = {}
+
+            // Use the els from group if in global scope, current selector otherwise
+            $selector = join(', ', $reset_content.elements)
+            $selector = '&' if selector() != '&'
+
+            $what[$selector] = '$reset_' + $reset_family + '_' + $reset_group
+            push($what_to_reset, $what)
+            $should_reset = false
+
+          if $should_reset
+            $selector = '&'
+            $selector = $element if selector() == '&'
+            $what = {}
+            $what[$selector] = '$reset_' + $reset_family + '_' + $reset_group
+            push($what_to_reset, $what)
+
+  // Could be moved inside conditions above when the bug with extend would be fixed
+  for $item in $what_to_reset
+    // Again, as we can't use normal push/extend in conds, we need this here
+    $selector = keys(length($what_to_reset) == 1 ? $what_to_reset : $item)
+    $placeholder = values(length($what_to_reset) == 1 ? $what_to_reset : $item)
+    {$selector}
+      @extend {$placeholder}
+
+// `enhance_reset` would enhance the given reset key with the given hash or block
+
+
+// `call_reset` — the main reset function. Should we call it just `reset`?
+// Or make an optional `?= reset` alias for this?

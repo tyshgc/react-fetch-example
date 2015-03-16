@@ -1,0 +1,10 @@
+// : ClearFix
+
+clearfix()
+  zoom 1
+  &:after
+  &:before
+    content ""
+    display table
+  &:after
+    clear both
